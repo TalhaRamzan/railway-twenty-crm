@@ -18,10 +18,10 @@ Self-host [Twenty](https://github.com/twentyhq/twenty), the open-source CRM
 
 | Service | Image | Public | Storage |
 |---|---|---|---|
-| **Twenty** (web app + API) | `twentycrm/twenty:v2.60.1` (digest-pinned) | Yes, HTTPS domain, healthcheck `/healthz` | none |
+| **Twenty** (web app + API) | `twentycrm/twenty:v2.60.1` (digest-pinned) | Yes, HTTPS domain (port 8080), no Railway healthcheck (see below) | none |
 | **Twenty Worker** (background jobs: imports, workflows, emails, sync, cron) | same image, `yarn worker:prod` | No | none |
-| **Postgres** 18.6 | `ghcr.io/railwayapp-templates/postgres-ssl:18.6` (pinned) | No | volume |
-| **Redis** 8.2.11 | `redis:8.2.11` (pinned) | No | volume |
+| **Postgres** 17.11 | `postgres:17.11` (digest-pinned) | No | volume |
+| **Redis** 8.6.8 | `redis:8.6.8` (digest-pinned) | No | volume |
 | **Bucket** | Railway Storage Bucket (S3-compatible) | No (private) | attachments, avatars, files |
 
 ## Why this template
@@ -181,13 +181,16 @@ to step through every release.
 
 ```bash
 # Railway CLI, linked to your project. Uses the Postgres service's variables.
-railway run --service Postgres -- sh -c 'pg_dump "$DATABASE_PUBLIC_URL" -Fc -f twenty-$(date +%F).dump'
+# The template's plain postgres image has no DATABASE_PUBLIC_URL, so build it from
+# the TCP proxy variables Railway adds once public networking is on.
+URL='postgresql://postgres:$POSTGRES_PASSWORD@$RAILWAY_TCP_PROXY_DOMAIN:$RAILWAY_TCP_PROXY_PORT/postgres'
+railway run --service Postgres -- sh -c "pg_dump \"$URL\" -Fc -f twenty-\$(date +%F).dump"
 # Restore into an EMPTY database:
-railway run --service Postgres -- sh -c 'pg_restore --no-owner -d "$DATABASE_PUBLIC_URL" twenty-YYYY-MM-DD.dump'
+railway run --service Postgres -- sh -c "pg_restore --no-owner -d \"$URL\" twenty-YYYY-MM-DD.dump"
 ```
 
-`DATABASE_PUBLIC_URL` needs Postgres public networking (TCP proxy) turned on. Turn it
-off again afterwards. You need a local `pg_dump`/`pg_restore` version 18. If your plan
+This needs Postgres public networking (TCP proxy) turned on. Turn it
+off again afterwards. You need a local `pg_dump`/`pg_restore` version 17 or newer. If your plan
 has Railway volume backups, schedule them on the Postgres volume too.
 
 **Files** (bucket): Railway buckets have **no automatic backups**. Copy them with any S3 tool,
@@ -209,7 +212,7 @@ The first boot creates the database schema (2–4 minutes). If it is interrupted
 | Symptom | Fix |
 |---|---|
 | Login loops, or "Unable to reach backend" | `SERVER_URL` doesn't match the browser URL. Fix it, then redeploy both services. |
-| Server never becomes healthy on first deploy | First boot can take several minutes. Check logs for DB init. The healthcheck timeout is 600 s. |
+| Server never becomes healthy on first deploy | First boot can take several minutes. Check logs for DB init (`Successfully migrated DB!`). The service has no Railway healthcheck, so don't redeploy during the first boot. |
 | `JavaScript heap out of memory` | Raise `NODE_OPTIONS=--max-old-space-size=...` and the memory limit on that service. |
 | Uploads/attachments fail | Check the `STORAGE_S3_*` references and the bucket in the server logs. |
 | Imports/workflows never finish | The worker isn't running, or uses different settings from the server. Check that its variables reference `Twenty`. |

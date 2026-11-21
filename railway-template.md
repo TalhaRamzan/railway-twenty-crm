@@ -4,10 +4,7 @@ Step-by-step guide to build this template in the Railway dashboard. Follow it in
 order. Service names matter, because reference variables use them
 (`${{Twenty.SERVER_URL}}`, `${{Postgres.DATABASE_URL}}`, `${{Bucket.BUCKET}}`...).
 
-Pinned versions (researched 2026-11-21):
-
-| Service | Image | Digest |
-|> **Published template:** https://railway.com/deploy/twenty-crm-2 (published 2026-11-21).
+> **Published template:** https://railway.com/deploy/twenty-crm-2 (published 2026-11-21).
 >
 > **How the published version differs from the steps below** (Railway's template generator keeps
 > only variables containing `${{...}}`, drops plain values and resets healthcheck timeouts):
@@ -24,7 +21,10 @@ Pinned versions (researched 2026-11-21):
 > - Verified by deploying the template itself into an empty project with zero inputs: all 4 services SUCCESS,
 >   "Successfully migrated DB!", `/healthz` 200, worker processing jobs, 143 objects written to the bucket.
 
----|---|---|
+Pinned versions (researched 2026-11-21):
+
+| Service | Image | Digest |
+|---|---|---|
 | Twenty, Twenty Worker | `twentycrm/twenty:v2.60.1` | `sha256:b190e54ca434ea1ee47fe73b8d76e77d0bf3c6f734fcec58e414108d6867939c` |
 | Postgres | `ghcr.io/railwayapp-templates/postgres-ssl:18.6` | `sha256:4fc833b43d2aaf6ecc9b18615f5533602b723a32d0e2efe2dae8ca0f7217c863` |
 | Redis | `redis:8.2.11` | `sha256:b0b01167ff47bc3868e56a967895a26be4230891a1f42a78ab61cdd227accc8d` |
