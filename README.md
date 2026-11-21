@@ -120,20 +120,21 @@ it works on every plan once you add the OAuth credentials.
 ## Estimated monthly cost
 
 Railway bills real usage: RAM $10/GB-month, CPU $20/vCPU-month, volumes
-$0.15/GB-month, egress $0.05/GB, buckets $0.015/GB-month. Typical idle footprint
-for a small team (estimate, to be confirmed by our test deploy):
+$0.15/GB-month, egress $0.05/GB, buckets $0.015/GB-month. Idle footprint measured
+on a Railway test deploy (2026-11-21, fresh install, see TEST.md); a small team in
+daily use sits around the upper end:
 
 | Service | RAM (typical) | Approx. cost/month |
 |---|---|---|
-| Twenty (server) | 0.6 to 0.9 GB | $6 to $9 |
-| Twenty Worker | 0.3 to 0.5 GB | $3 to $5 |
-| Postgres | 0.1 to 0.25 GB | $1 to $2.5 |
+| Twenty (server) | 0.85 to 1.0 GB | $8.5 to $10 |
+| Twenty Worker | 0.9 to 1.1 GB | $9 to $11 |
+| Postgres | 0.08 to 0.25 GB | $1 to $2.5 |
 | Redis | ~0.02 GB | ~$0.2 |
 | CPU (all, mostly idle) | 0.05 to 0.15 vCPU | $1 to $3 |
 | Volumes + bucket + egress (small team) | 1 to 5 GB | < $1 |
-| **Total** | **~1.0 to 1.7 GB** | **~$12 to $20** |
+| **Total** | **~1.9 to 2.4 GB** | **~$20 to $28** |
 
-On the Hobby plan ($5/month, includes $5 of usage) that is about **$12 to $20 total
+On the Hobby plan ($5/month, includes $5 of usage) that is about **$20 to $28 total
 per month**. Heavy imports, many users or mailbox sync raise CPU and RAM. You can set
 memory limits per service in Settings → Resource limits (template defaults: server
 2 GB, worker 1.5 GB, Postgres 1 GB, Redis 256 MB). Limits are caps, not reservations:
