@@ -3,7 +3,7 @@
 Self-host [Twenty](https://github.com/twentyhq/twenty), the open-source CRM
 (a Salesforce / HubSpot alternative), on Railway in one click.
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/REPLACE_WITH_TEMPLATE_CODE)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/twenty-crm-2)
 
 > **Unofficial community template.** It is not made, endorsed or supported by
 > Twenty.com PBC. "Twenty" is used only to describe the software this template
@@ -54,27 +54,40 @@ Self-host [Twenty](https://github.com/twentyhq/twenty), the open-source CRM
 
 ## Configuration
 
-All settings live on the **Twenty** service. The worker references them
-(`${{Twenty.VARIABLE}}`), so change them in one place and redeploy both services.
+The template deploys with **zero inputs**. Railway templates only carry secrets
+and references, so the template sets those as variables and every plain
+setting has a default in the service **start command** (`${VAR:-default}`).
+To change a default, add the variable to the **Twenty** service (and to
+**Twenty Worker** where noted) and redeploy.
 
-| Variable | Default in template | Notes |
+Variables set by the template (on `Twenty`; the worker references them as `${{Twenty.X}}`):
+
+| Variable | Value | Notes |
 |---|---|---|
 | `SERVER_URL` | `https://${{RAILWAY_PUBLIC_DOMAIN}}` | Must match the URL in the browser exactly. Change it when you add a custom domain. |
-| `PORT` / `NODE_PORT` | `3000` | Twenty listens on `NODE_PORT`. |
 | `PG_DATABASE_URL` | `${{Postgres.DATABASE_URL}}` | Private network. |
-| `REDIS_URL` | `${{Redis.REDIS_URL}}` | Private network. Redis must keep `maxmemory-policy noeviction`. |
-| `ENCRYPTION_KEY` | random (`${{secret()}}`) | Encrypts secrets in the DB. **Never change it** without the upstream key-rotation guide. |
+| `REDIS_URL` | `${{Redis.REDIS_URL}}` | Private network. Redis runs with `maxmemory-policy noeviction` and append-only persistence. |
+| `ENCRYPTION_KEY` | random (`${{secret()}}`) | Encrypts secrets in the DB. **Never change it** without the upstream key-rotation guide. Back it up. |
 | `APP_SECRET` | random | Legacy secret, kept for compatibility. |
+| `STORAGE_S3_NAME`, `STORAGE_S3_REGION`, `STORAGE_S3_ENDPOINT`, `STORAGE_S3_ACCESS_KEY_ID`, `STORAGE_S3_SECRET_ACCESS_KEY` | `${{Bucket.*}}` | From the Railway bucket. |
+
+Defaults in the start commands (add the variable to override):
+
+| Variable | Default | Notes |
+|---|---|---|
+| `NODE_PORT` | Railway's `PORT` (8080) | The public domain targets 8080. |
 | `STORAGE_TYPE` | `s3` | Files go to the Railway bucket. |
-| `STORAGE_S3_NAME`, `STORAGE_S3_REGION`, `STORAGE_S3_ENDPOINT`, `STORAGE_S3_ACCESS_KEY_ID`, `STORAGE_S3_SECRET_ACCESS_KEY` | `${{Bucket.BUCKET}}`, `${{Bucket.REGION}}`, `${{Bucket.ENDPOINT}}`, `${{Bucket.ACCESS_KEY_ID}}`, `${{Bucket.SECRET_ACCESS_KEY}}` | From the Railway bucket. |
 | `IS_MULTIWORKSPACE_ENABLED` | `false` | Single workspace. Sign-up closes after the first workspace. |
 | `IS_WORKSPACE_CREATION_LIMITED_TO_SERVER_ADMINS` | `true` | Only server admins can create workspaces. |
 | `EMAIL_DRIVER` | `logger` | Emails are written to the logs. See [Email](#email). |
-| `EMAIL_FROM_ADDRESS` / `EMAIL_FROM_NAME` | `noreply@example.com` / `Twenty CRM` | Change when you enable email. |
-| `TELEMETRY_ENABLED` | `false` | Set `true` to send anonymous usage data to Twenty. |
-| `NODE_OPTIONS` | server `--max-old-space-size=1536`, worker `1024` | Heap cap. Raise if you see "heap out of memory". |
-| `DISABLE_DB_MIGRATIONS` / `DISABLE_CRON_JOBS_REGISTRATION` | server `false`, worker `true` | Only the server migrates. Don't change. |
-| `RAILWAY_DEPLOYMENT_DRAINING_SECONDS` | `60` (server) | Lets in-flight requests finish before an old deploy stops. |
+| `EMAIL_FROM_ADDRESS` / `EMAIL_FROM_NAME` | `noreply@example.com` / `Twenty CRM` | Change when you enable email (set on both services). |
+| `TELEMETRY_ENABLED` | `false` | |
+| `NODE_OPTIONS` (server) / `WORKER_NODE_OPTIONS` (worker) | `--max-old-space-size=1536` / `1024` | Heap cap. Raise if you see "heap out of memory". |
+| `DISABLE_DB_MIGRATIONS` / `DISABLE_CRON_JOBS_REGISTRATION` | server `false`, worker always `true` | Only the server migrates. |
+
+The `Twenty` service has **no healthcheck** on purpose: Railway templates reset
+the healthcheck timeout to 5 minutes, and a slow first boot killed mid-way
+leaves a half-created database. Draining is 60 s.
 
 Many other settings (Google/Microsoft sign-in, Gmail/Outlook sync, AI keys, SMTP)
 can be set in Twenty's **Admin Panel → Config variables**. They're stored in the

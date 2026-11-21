@@ -7,7 +7,24 @@ order. Service names matter, because reference variables use them
 Pinned versions (researched 2026-11-21):
 
 | Service | Image | Digest |
-|---|---|---|
+|> **Published template:** https://railway.com/deploy/twenty-crm-2 (published 2026-11-21).
+>
+> **How the published version differs from the steps below** (Railway's template generator keeps
+> only variables containing `${{...}}`, drops plain values and resets healthcheck timeouts):
+> - `Postgres`: plain image `postgres:17.11@sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f`,
+>   volume `/var/lib/postgresql`, `POSTGRES_PASSWORD=${{secret(32, ALNUM)}}`,
+>   `DATABASE_URL=postgresql://postgres:${{POSTGRES_PASSWORD}}@${{RAILWAY_PRIVATE_DOMAIN}}:5432/postgres`.
+> - `Redis`: `redis:8.6.8@sha256:8b30…a7fa5`, volume `/data`, `REDIS_PASSWORD=${{secret(32, hex)}}`,
+>   `REDIS_URL=redis://default:${{REDIS_PASSWORD}}@${{RAILWAY_PRIVATE_DOMAIN}}:6379`, start command
+>   `/bin/sh -c "chown -R redis:redis /data 2>/dev/null; exec docker-entrypoint.sh redis-server --requirepass \"$REDIS_PASSWORD\" --appendonly yes --dir /data --maxmemory-policy noeviction"`
+>   (the chown fixes "Can't open or create append-only dir: Permission denied" on root-owned Railway volumes).
+> - `Twenty` / `Twenty Worker`: only secrets/references as variables; all plain settings are `${VAR:-default}` exports in
+>   the start commands, ending in `exec /app/entrypoint.sh node dist/main` and `exec /app/entrypoint.sh yarn worker:prod`.
+>   No `PORT` variable: Railway injects 8080, `NODE_PORT=${PORT}`, domain targets 8080. No healthcheck on `Twenty`.
+> - Verified by deploying the template itself into an empty project with zero inputs: all 4 services SUCCESS,
+>   "Successfully migrated DB!", `/healthz` 200, worker processing jobs, 143 objects written to the bucket.
+
+---|---|---|
 | Twenty, Twenty Worker | `twentycrm/twenty:v2.60.1` | `sha256:b190e54ca434ea1ee47fe73b8d76e77d0bf3c6f734fcec58e414108d6867939c` |
 | Postgres | `ghcr.io/railwayapp-templates/postgres-ssl:18.6` | `sha256:4fc833b43d2aaf6ecc9b18615f5533602b723a32d0e2efe2dae8ca0f7217c863` |
 | Redis | `redis:8.2.11` | `sha256:b0b01167ff47bc3868e56a967895a26be4230891a1f42a78ab61cdd227accc8d` |
