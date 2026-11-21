@@ -1,0 +1,21 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Local data / backups
+*.dump
+*.sql
+*.sql.gz
+backups/
+bucket-backup/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Railway CLI link
+.railway/
