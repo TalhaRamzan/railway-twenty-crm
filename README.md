@@ -189,6 +189,9 @@ can't decrypt stored credentials.
 
 ## Troubleshooting
 
+### First deploy was interrupted: `relation "core.…" does not exist`
+The first boot creates the database schema (2–4 minutes). If it is interrupted (for example you click Redeploy while it is still running), the schema is left half-created and later boots fail with errors like `relation "core.keyValuePair" does not exist`. On a fresh install with no data, fix it by deleting the `Postgres` service volume (or the whole Postgres service and adding it again with the same name) and deploying `Twenty` once, then `Twenty Worker`. Do not redeploy during the first boot.
+
 | Symptom | Fix |
 |---|---|
 | Login loops, or "Unable to reach backend" | `SERVER_URL` doesn't match the browser URL. Fix it, then redeploy both services. |

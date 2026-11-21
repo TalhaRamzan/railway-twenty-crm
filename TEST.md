@@ -108,3 +108,12 @@ Upgrade-from version: `twentycrm/twenty:v2.59.3`
 - PASS: fresh stack on v2.59.3 → sign up, workspace "Upgrade Co", seed companies; renamed one company to `UpgradeMarker`.
 - PASS: switched server to v2.60.1 → healthy; upgrade-metadata step ran, cron registration 32 OK / 0 failed; then worker on v2.60.1 → running, no errors.
 - PASS: all 5 companies incl. `UpgradeMarker` still there (DB and UI); browser session stayed logged in, no forced logout.
+
+## Railway deploy results (2026-11-21, Hobby plan, test project deleted after ~28 min)
+- PASS: image field accepts `twentycrm/twenty:v2.60.1@sha256:…`.
+- PASS: references resolve, including nested worker references (`${{Twenty.SERVER_URL}}`, `${{Twenty.STORAGE_S3_*}}`) and the bucket's `${{Bucket.*}}` variables. `ENCRYPTION_KEY` secret format resolves to 44 chars.
+- PASS (B3, the #1 risk): Railway bucket (endpoint `https://t3.storageapi.dev`) accepts **path-style** S3 requests (put/list/get/delete verified with aws-cli `addressing_style = path`). Twenty itself wrote its app-registration files into the bucket on boot.
+- PASS: server healthy (`/healthz` 200, `/welcome` 200), "Successfully migrated DB!"; worker (start command `/app/entrypoint.sh yarn worker:prod`) processes BullMQ cron jobs over Railway Redis.
+- Measured RAM on Railway (idle, no workspace yet): Twenty ~860 MB, Worker ~1.03 GB, Postgres ~75 MB, Redis ~19 MB → ~2 GB ≈ $20/month RAM.
+- FOUND: if the very first boot is interrupted (e.g. a redeploy while `database:init:prod` is running), the `core` schema exists but is incomplete; later boots skip init and fail with `relation "core.keyValuePair" does not exist`. Fix: reset the database (new Postgres or drop the `core` schema) and deploy once without interrupting. Added to README troubleshooting.
+- Not tested on Railway: sign-up/workspace in the browser and file upload from the UI (verified locally).
